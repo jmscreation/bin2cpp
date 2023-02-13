@@ -11,22 +11,22 @@ set CPP=c++
 set GPP=g++
 set GCC=gcc
 set WINDRES=windres
-set OUTPUT=bin2cpp.exe
+set OUTPUT=test.exe
 set DEBUGMODE=1
 set COMMANDLINE=1
 
 set VERBOSE=0
 
 set AUTO_REBUILD=1
-set REBUILD_SOURCE_DIRECTORIES=1
+set REBUILD_SOURCE_DIRECTORIES=0
 set REBUILD_SOURCE_LIBRARIES=0
 set ASYNC_BUILD=1
 
 set LINK_ONLY=0
 
 :: Configure Source For Compiling And Additional Custom Library Directories / Names
-set SOURCE_DIRECTORIES=src
-set INCLUDE_DIRECTORIES=include
+set SOURCE_DIRECTORIES=test
+set INCLUDE_DIRECTORIES=include test
 set LIBRARY_DIRECTORIES=libraries/libtomcrypt-main
 set LIBRARY_NAMES=tomcrypt64 tommath64
 

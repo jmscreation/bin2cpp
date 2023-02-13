@@ -6,6 +6,8 @@
 #include <cmath>
 #include <ctime>
 
+#include "bin2cpp_crypt.h"
+
 namespace fs = std::filesystem;
 
 // Quick String Filter
@@ -19,7 +21,7 @@ bool filterString(std::string& str, const std::string& substr, const std::string
 
 // Convert To C++ Char Array
 
-bool bin2cpp(const std::string& name, const std::string& in, const std::string& out) {
+bool Bin2Cpp(const std::string& name, const std::string& key, const std::string& in, const std::string& out) {
     std::string out_cpp = out + ".cpp", out_h = out + ".h", macrodefine = name;
 
     std::ifstream input(in, std::ios::binary | std::ios::in);
@@ -41,27 +43,35 @@ bool bin2cpp(const std::string& name, const std::string& in, const std::string& 
         return false;
     }
 
-    std::cout << "Converting binary to c++..." << std::endl;
+    std::cout << "Converting and encrypting binary to c++..." << std::endl;
 
-    output << "#include \"" << out_h << "\"\nconst char " << name << "[" << flen << "] = {"; // header information
-    bool begin = true;
-    while(!input.eof()){ // append data converted to char value array
-        char buf[1024];
-        size_t len = input.readsome(buf, 1024);
 
-        for(size_t i=0; i < len; ++i){
-            if(begin){
-                output << (int)buf[i];
-                begin = false;
-            } else {
-                output << "," << (int)buf[i];
-            }
+    std::stringstream encbuf;
+    {
+        std::stringstream filebuf;
+        while(!input.eof()){ // read file into memory
+            char buf[1024];
+            size_t len = input.readsome(buf, 1024);
+
+            if(len == 0) break;
+
+            filebuf.write(buf, len);
         }
 
-        if(len == 0) break;
+        if(!bin2cpp::DataEncrypt(filebuf.view().data(), filebuf.view().size(), encbuf, key)){
+            std::cout << "Failed to encrypt binary data!\n";
+            return false;
+        }
     }
+    flen = encbuf.view().length(); // update file length to encrypted data size
 
-    output << "};";
+    output << "#include \"" << out_h << "\"\nbin2cpp::Resource<" << flen << "> " << name << " {{"; // header information
+    bool begin = true;
+    for(const char c : encbuf.view()){
+        output << (begin ? "" : ",") << static_cast<int16_t>(c);
+        begin = false;
+    }
+    output << "}};";
 
     input.close();
     output.close();
@@ -82,7 +92,8 @@ bool bin2cpp(const std::string& name, const std::string& in, const std::string& 
     header <<
         "#ifndef __" << macrodefine << "__\n" <<
         "#define __" << macrodefine << "__\n\n" <<
-        "extern const char " << name << "[" << flen << "];\n\n" <<
+        "#include \"bin2cpp_crypt.h\"\n" <<
+        "extern bin2cpp::Resource<" << flen << "> " << name << ";\n\n" <<
         "#endif // __" << macrodefine << "__";
 
     header.close();
@@ -97,31 +108,32 @@ int main(int argc, char** argv) {
     srand(time(0));
 
     // Display Help
-    if(argc < 2) {
-        std::cout << "==== Bin2Cpp -> Convert a binary file to a raw cpp file for embedded data ====\n"
+    if(argc < 3) {
+        std::cout << "==== Bin2Cpp -> Convert a binary file to a raw cpp file for encrypted embedded data ====\n"
                   << "Usage:\n"
-                  << "bin2cpp <input-file> *<resource-name> (resource$n) *<output-file> (binary$n)\n"
+                  << "bin2cpp <input-file> <encryption-key> *<resource-name> (resource$n) *<output-file> (binary$n)\n"
                   << "$n = random number\n"
                   << "<argument value>\n"
                   << "*<optional argument>\n"
                   << "(default value)\n"
                   << "\n"
                   << "Examples:\n"
-                  << "bin2cpp file.ext\n"
-                  << "bin2cpp test.txt TestTextFile\n"
-                  << "bin2cpp run.exe RunExe bin_runexe\n";
+                  << "bin2cpp secret file.ext\n"
+                  << "bin2cpp Pa$$w0rd test.txt TestTextFile\n"
+                  << "bin2cpp \"Pwd Enc-payload\" run.exe RunExe bin_runexe\n";
         return 0;
     }
 
 
-    std::string input = argv[1],
+    std::string input = argv[1], // get resource file path
+                secret = argv[2], // get resource encryption secret
                 name = "resource$n",
                 output = "binary$n";
-    if(argc > 2){
-        name = argv[2]; // update resource name
-    }
     if(argc > 3){
-        output = argv[3]; // update output filename
+        name = argv[3]; // update resource name
+    }
+    if(argc > 4){
+        output = argv[4]; // update output filename
     }
 
     do {
@@ -134,6 +146,5 @@ int main(int argc, char** argv) {
         break;
     } while(1);
 
-
-    return !bin2cpp(name, input, output);
+    return !Bin2Cpp(name, secret, input, output);
 }
