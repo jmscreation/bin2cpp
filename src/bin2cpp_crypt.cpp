@@ -60,7 +60,7 @@ bool DataDecrypt(const char* data_in, size_t length_in, std::stringstream& data_
 
     if(!data.length()) return false;
 
-    data_out.write(data.c_str(), data.size());
+    data_out.write(data.c_str(), data.size()); // export data to output memory buffer
 
     return true;
 }
