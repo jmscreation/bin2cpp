@@ -146,5 +146,5 @@ int main(int argc, char** argv) {
         break;
     } while(1);
 
-    return !Bin2Cpp(name, secret, input, output);
+    return !Bin2Cpp(name, secret, input, output); // run program
 }
