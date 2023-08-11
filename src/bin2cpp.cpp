@@ -118,9 +118,9 @@ int main(int argc, char** argv) {
                   << "(default value)\n"
                   << "\n"
                   << "Examples:\n"
-                  << "bin2cpp secret file.ext\n"
-                  << "bin2cpp Pa$$w0rd test.txt TestTextFile\n"
-                  << "bin2cpp \"Pwd Enc-payload\" run.exe RunExe bin_runexe\n";
+                  << "bin2cpp file.ext secret\n"
+                  << "bin2cpp test.txt Pa$$w0rd TestTextFile\n"
+                  << "bin2cpp run.exe \"Pwd Enc-payload\" RunExe bin_runexe\n";
         return 0;
     }
 
